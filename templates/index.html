@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="../static/stylesheet.css">
+</head>
+<body>
+    <nav>
+        <a href="/add_image">
+            Add image
+        </a>
+        <a href="/inactive">
+            Inactive
+        </a>
+    </nav>
+    <main>
+        {% for image in images %}
+            <img src="{{ image }}" />
+        {% endfor %}
+    </main>
+</body>
+</html>
