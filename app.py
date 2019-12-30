@@ -1,21 +1,34 @@
-from flask import Flask, redirect, url_for, request, render_template, send_file
+from flask import Flask, redirect, url_for, request, render_template, send_file, jsonify
 from pymongo import MongoClient
 from werkzeug.utils import secure_filename
 from azure.storage.file import FileService, ContentSettings
+from redis import Redis
+from tasks import process_image
+import rq
+import sys
+import os
+
 
 app = Flask(__name__)
 
+# mongo
 client = MongoClient('mongodb://db:27017/')
 db = client.images_info
+
+# azure files
 file_service = FileService(
     account_name='projektjnp',
     account_key='+aIBrGxRSY5OTqpa2ZO/bMsLxUV6vs/pO20Cz0EBj9ZWerexgDBkw5d7HBfkXNcHX+HpJoGPJdPXo1prtQY/5w=='
 )
 
 
+# async
+queue = rq.Queue(connection=Redis.from_url('redis://redis:6379'))
+
+
 @app.route('/')
 def index():
-    images = [f'image/{image["name"]}' for image in db.images_info.find()]
+    images = [f'images/{image["name"]}' for image in db.images_info.find()]
 
     return render_template('index.html', images=images)
 
@@ -24,18 +37,12 @@ def index():
 def add_image():
     if request.method == 'POST':
         file = request.files['image']
+        blurred = 'blurred' in request.form
+        grayscale = 'grayscale' in request.form
+        print(vars(request), file=sys.stderr)
         filename = secure_filename(file.filename)
-        file.save(filename)
-        file_service.create_file_from_path(
-            'images',
-            'original',
-            filename,
-            filename,
-            content_settings=ContentSettings(content_type='image/png')
-        )
-
-        image = {'name': filename}
-        db.images_info.insert_one(image)
+        file.save(f'/images/{filename}')
+        queue.enqueue(process_image, filename, blurred, grayscale)
 
         return redirect(url_for('index'))
     else:
@@ -53,7 +60,7 @@ def new():
     return redirect(url_for('index'))
 
 
-@app.route('/image/<image_name>')
+@app.route('/images/<image_name>')
 def get_image(image_name):
     file_service.get_file_to_path(
         'images',
@@ -74,6 +81,23 @@ def azure():
 def clean_database():
     count = db.images_info.delete_many({})
     return f'{count} deleted'
+
+
+@app.route('/count_files')
+def count():
+    in_collection = db.images_info.count()
+    return f'{in_collection} in collection'
+
+
+@app.route('/images')
+def all_images():
+    in_collection = [image['name'] for image in db.images_info.find()]
+    return jsonify(in_collection)
+
+
+@app.route('/server')
+def server():
+    return f'running on server {os.environ["SERVER_ID"]}'
 
 
 if __name__ == "__main__":
