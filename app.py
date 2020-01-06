@@ -4,6 +4,8 @@ from werkzeug.utils import secure_filename
 from azure.storage.file import FileService, ContentSettings
 from redis import Redis
 from tasks import process_image
+from flask_caching import Cache
+from tasks import stderr
 import rq
 import sys
 import os
@@ -21,16 +23,28 @@ file_service = FileService(
     account_key='+aIBrGxRSY5OTqpa2ZO/bMsLxUV6vs/pO20Cz0EBj9ZWerexgDBkw5d7HBfkXNcHX+HpJoGPJdPXo1prtQY/5w=='
 )
 
-
 # async
 queue = rq.Queue(connection=Redis.from_url('redis://redis:6379'))
 
+# cache
+cache = Cache(app, config={
+    'CACHE_TYPE': 'redis',
+    'CACHE_REDIS_URL': 'redis://redis:6379'
+    })
+
 
 @app.route('/')
+@cache.cached(timeout=10)
 def index():
-    images = [f'images/{image["name"]}' for image in db.images_info.find()]
+    images = [
+        (image['name'], f'images/{image["name"]}', image['likes'])
+        for image in db.images_info.find()
+    ]
 
-    return render_template('index.html', images=images)
+    return render_template(
+        'index.html',
+        images=images
+    )
 
 
 @app.route('/add_image', methods=['GET', 'POST'])
@@ -62,13 +76,20 @@ def new():
 
 @app.route('/images/<image_name>')
 def get_image(image_name):
+    local_name = f'/images/{image_name}'
     file_service.get_file_to_path(
         'images',
         'original',
         image_name,
-        image_name,
+        local_name,
     )
-    return send_file(image_name)
+    return send_file(local_name)
+
+
+@app.route('/images/<image_name>/like')
+def like_image(image_name):
+    db.images_info.update({'name': image_name}, {"$inc": {"likes": 1}})
+    return redirect(url_for('index'))
 
 
 @app.route('/azure')

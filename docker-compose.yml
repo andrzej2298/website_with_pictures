@@ -5,7 +5,7 @@ services:
   web_1:
     build:
       context: .
-      dockerfile: ./docker/web/Dockerfile
+      dockerfile: dockerfiles/web/Dockerfile
     command: python app.py
     ports:
       - "8080:5000"
@@ -21,7 +21,7 @@ services:
   web_2:
     build:
       context: .
-      dockerfile: ./docker/web/Dockerfile
+      dockerfile: dockerfiles/web/Dockerfile
     command: python app.py
     ports:
       - "8081:5000"
@@ -37,7 +37,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: ./docker/worker/Dockerfile
+      dockerfile: dockerfiles/worker/Dockerfile
     command: rq worker -u 'redis://redis'
     volumes:
       - .:/code

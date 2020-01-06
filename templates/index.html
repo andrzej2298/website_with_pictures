@@ -8,13 +8,14 @@
         <a href="/add_image">
             Add image
         </a>
-        <a href="/inactive">
-            Inactive
-        </a>
     </nav>
     <main>
-        {% for image in images %}
-            <img src="{{ image }}" />
+        {% for name, image, likes in images %}
+            <div>
+                <img src="{{ image }}" />
+                <span>{{ likes }}</span>
+                <a href="images/{{ name }}/like">like</a>
+            </div>
         {% endfor %}
     </main>
 </body>

@@ -33,7 +33,7 @@ def upload_image(local_filename, storage_filename):
         content_settings=ContentSettings(content_type='image/png')
     )
 
-    image = {'name': storage_filename}
+    image = {'name': storage_filename, 'likes': 0}
     db.images_info.insert_one(image)
 
 
