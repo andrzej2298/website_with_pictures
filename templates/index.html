@@ -8,13 +8,16 @@
         <a href="/add_image">
             Add image
         </a>
+        <a href="/top_three">
+            Top 3
+        </a>
     </nav>
     <main>
         {% for name, image, likes in images %}
             <div>
                 <img src="{{ image }}" />
                 <span>{{ likes }}</span>
-                <a href="images/{{ name }}/like">like</a>
+                <a href="images/{{ name }}/like?return_to={{ return_to }}">like</a>
             </div>
         {% endfor %}
     </main>

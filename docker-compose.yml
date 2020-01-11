@@ -2,37 +2,20 @@ version: "3"
 
 services:
 
-  web_1:
+  web:
     build:
       context: .
       dockerfile: dockerfiles/web/Dockerfile
     command: python app.py
     ports:
-      - "8080:5000"
+      - "8080-8081:5000"
     volumes:
       - .:/code
       - ./images:/images
     links:
       - db
       - redis
-    environment:
-      - SERVER_ID=1
 
-  web_2:
-    build:
-      context: .
-      dockerfile: dockerfiles/web/Dockerfile
-    command: python app.py
-    ports:
-      - "8081:5000"
-    volumes:
-      - .:/code
-      - ./images:/images
-    links:
-      - db
-      - redis
-    environment:
-      - SERVER_ID=2
 
   worker:
     build:
@@ -60,4 +43,37 @@ services:
     ports:
       - 80:80
       - 443:443
+    links:
+      - web
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.1.1
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.enabled=false
+      - xpack.ml.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.1.1
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    restart: always
+    ports:
+      - "5601:5601"
+
+volumes:
+  elasticsearch_data:

@@ -58,4 +58,4 @@ def process_image(filename, blurred, grayscale_image):
     upload_image(local_filename, storage_filename)
     unlink(local_filename)
 
-    stderr(f'image processed')
+    stderr('image processed')

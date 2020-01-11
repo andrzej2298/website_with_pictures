@@ -6,10 +6,11 @@ from redis import Redis
 from tasks import process_image
 from flask_caching import Cache
 from tasks import stderr
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import connections, Search
 import rq
 import sys
 import os
-
 
 app = Flask(__name__)
 
@@ -30,11 +31,28 @@ queue = rq.Queue(connection=Redis.from_url('redis://redis:6379'))
 cache = Cache(app, config={
     'CACHE_TYPE': 'redis',
     'CACHE_REDIS_URL': 'redis://redis:6379'
-    })
+})
+
+# logging
+es = Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])
+
+
+def log(log_body):
+    es.index(index='logs', doc_type='log1', body=log_body)
+
+
+@app.route('/add_log')
+def add_log():
+    error_message = request.args.get('error')
+    log_body = {
+        'source': 'web',
+        'error': error_message,
+    }
+    log(log_body)
+    return jsonify(log_body)
 
 
 @app.route('/')
-@cache.cached(timeout=10)
 def index():
     images = [
         (image['name'], f'images/{image["name"]}', image['likes'])
@@ -43,7 +61,23 @@ def index():
 
     return render_template(
         'index.html',
-        images=images
+        images=images,
+        return_to='index',
+    )
+
+
+@app.route('/top_three')
+@cache.cached(timeout=60)
+def top_three():
+    images = [
+        (image['name'], f'images/{image["name"]}', image['likes'])
+        for image in db.images_info.find().sort([('likes', -1)]).limit(3)
+    ]
+
+    return render_template(
+        'index.html',
+        images=images,
+        return_to='top_three',
     )
 
 
@@ -89,7 +123,8 @@ def get_image(image_name):
 @app.route('/images/<image_name>/like')
 def like_image(image_name):
     db.images_info.update({'name': image_name}, {"$inc": {"likes": 1}})
-    return redirect(url_for('index'))
+    return_url = request.args.get('return_to')
+    return redirect(url_for(return_url))
 
 
 @app.route('/azure')
@@ -118,7 +153,7 @@ def all_images():
 
 @app.route('/server')
 def server():
-    return f'running on server {os.environ["SERVER_ID"]}'
+    return f'running on server {os.environ["HOSTNAME"]}'
 
 
 if __name__ == "__main__":
