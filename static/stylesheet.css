@@ -9,3 +9,7 @@ img {
     width: auto;
     height: auto;
 }
+
+.image-card {
+    max-width: 30%;
+}

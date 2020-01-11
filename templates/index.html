@@ -1,25 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" type="text/css" href="../static/stylesheet.css">
-</head>
-<body>
-    <nav>
-        <a href="/add_image">
-            Add image
-        </a>
-        <a href="/top_three">
-            Top 3
-        </a>
-    </nav>
-    <main>
-        {% for name, image, likes in images %}
-            <div>
-                <img src="{{ image }}" />
-                <span>{{ likes }}</span>
-                <a href="images/{{ name }}/like?return_to={{ return_to }}">like</a>
-            </div>
-        {% endfor %}
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex flex-row justify-content-around">
+    {% for name, image, likes in images %}
+    <div class="card image-card">
+        <img class="card-img-top" src="{{ image }}"/>
+        <div class="card-body">
+            <span class="mr-2">{{ likes }} likes</span>
+            <a class="btn btn-primary" href="images/{{ name }}/like?return_to={{ return_to }}">like</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

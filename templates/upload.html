@@ -1,16 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" type="text/css" href="../static/stylesheet.css">
-</head>
-<body>
-<form action="add_image" method="post" enctype="multipart/form-data">
-        <input type="file" name="image" />
-        <input type="checkbox" name="grayscale" /> grayscale
-        <input type="checkbox" name="blurred" /> blurred
-        <input type="submit" />
+{% extends "base.html" %}
+{% block content %}
+<form class="card p-5" action="add_image" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+                <label class="h2" for="image">Select an image:</label>
+                <input class="form-control-file" type="file" name="image" id="image" />
+        </div>
+        <div class="form-group form-check">
+                <input class="form-check-input" type="checkbox" name="grayscale" id="grayscale" />
+                <label class="form-check-label" for="grayscale">grayscale</label>
+        </div>
+        <div class="form-group form-check">
+                <input class="form-check-input" type="checkbox" name="blurred" id="blurred" />
+                <label class="form-check-label" for="blurred">blurred</label>
+        </div>
+                <input class="btn btn-primary" type="submit" />
 </form>
-
-</body>
-</html>
-
+{% endblock %}
