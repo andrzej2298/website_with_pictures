@@ -7,16 +7,17 @@ import uuid
 from os import unlink
 from PIL import Image, ImageFilter
 from PIL.ImageOps import grayscale
+from config import MONGO_URL, AZURE_ACCOUNT, AZURE_KEY
 
 
 # mongo
-client = MongoClient('mongodb://db:27017/')
+client = MongoClient(MONGO_URL)
 db = client.images_info
 
 # azure files
 file_service = FileService(
-    account_name='projektjnp',
-    account_key='+aIBrGxRSY5OTqpa2ZO/bMsLxUV6vs/pO20Cz0EBj9ZWerexgDBkw5d7HBfkXNcHX+HpJoGPJdPXo1prtQY/5w=='
+    account_name=AZURE_ACCOUNT,
+    account_key=AZURE_KEY,
 )
 
 

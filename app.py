@@ -13,28 +13,29 @@ import sys
 import os
 
 app = Flask(__name__)
+app.config.from_pyfile('config.py')
 
 # mongo
-client = MongoClient('mongodb://db:27017/')
+client = MongoClient(app.config['MONGO_URL'])
 db = client.images_info
 
 # azure files
 file_service = FileService(
-    account_name='projektjnp',
-    account_key='+aIBrGxRSY5OTqpa2ZO/bMsLxUV6vs/pO20Cz0EBj9ZWerexgDBkw5d7HBfkXNcHX+HpJoGPJdPXo1prtQY/5w=='
+    account_name=app.config['AZURE_ACCOUNT'],
+    account_key=app.config['AZURE_KEY'],
 )
 
 # async
-queue = rq.Queue(connection=Redis.from_url('redis://redis:6379'))
+queue = rq.Queue(connection=Redis.from_url(app.config['REDIS_URL']))
 
 # cache
 cache = Cache(app, config={
     'CACHE_TYPE': 'redis',
-    'CACHE_REDIS_URL': 'redis://redis:6379'
+    'CACHE_REDIS_URL': app.config['REDIS_URL'],
 })
 
 # logging
-es = Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])
+es = Elasticsearch(app.config['ELASTICSEARCH_CONFIG'])
 
 
 def log(log_body):
